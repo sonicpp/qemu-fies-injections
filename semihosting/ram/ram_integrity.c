@@ -15,7 +15,7 @@ int main(void)
 	struct HVD hvd;
 
 	aprintf("Data address %p - %p (size %d)\n", hvd.data,
-		hvd.data + sizeof(int) * ROWS, sizeof(int) * ROWS);
+		&hvd.data[ROWS - 1], ROWS * sizeof(int));
 
 	/* Generate data */
 	srand(42);
