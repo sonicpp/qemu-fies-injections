@@ -12,9 +12,9 @@ struct HVD {
 	unsigned v;
 };
 
-int HVD_repair_data(struct HVD *hvd_t, struct HVD *hvd_r);
 void HVD_calc_parity(struct HVD *hvd);
-int HVD_check_parity(struct HVD *hvd_r, struct HVD *hvd_t);
+int HVD_check_integrity(struct HVD *hvd);
+int HVD_repair_data(struct HVD *hvd);
 
 #endif	// HVD_H
 

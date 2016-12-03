@@ -31,7 +31,7 @@
  *          MSB                         LSB
  * word 1: |p08|p07|p06|p05|p04|p03|p02|p01|
  */
-static void HVD_calc_h_parity(struct HVD *hvd)
+static void HVD_calc_h_parity(struct HVD *hvd, unsigned *h)
 {
 	/* parity mask for nibble:
 		0 1 1 0 1 0 0 1
@@ -41,26 +41,20 @@ static void HVD_calc_h_parity(struct HVD *hvd)
 	unsigned parity = 0x6996;
 
 	for (int i = 0; i < BLOCKS; i++) {
-		unsigned a = 0;
-		unsigned b = 0;
-		unsigned c = 0;
-		unsigned d = 0;
-		unsigned e = 0;
-		unsigned f = 0;
-		unsigned g = 0;
-		unsigned h = 0;
+		unsigned n1, n2, n3, n4, n5, n6, n7, n8;
+		n1 = n2 = n3 = n4 = n5 = n6 = n7 = n8 = 0;
 		for (int j = 0; j < 32; j++) {
 			unsigned data = hvd->data[j + 32 * i];
-			a |= ((parity >> (data & 0xf)) & 0x1) << j;
-			b |= ((parity >> ((data >> 4) & 0xf)) & 0x1) << j;
-			c |= ((parity >> ((data >> 8) & 0xf)) & 0x1) << j;
-			d |= ((parity >> ((data >> 12) & 0xf)) & 0x1) << j;
-			e |= ((parity >> ((data >> 16) & 0xf)) & 0x1) << j;
-			f |= ((parity >> ((data >> 20) & 0xf)) & 0x1) << j;
-			g |= ((parity >> ((data >> 24) & 0xf)) & 0x1) << j;
-			h |= ((parity >> ((data >> 28) & 0xf)) & 0x1) << j;
+			n1 |= ((parity >> (data & 0xf)) & 0x1) << j;
+			n2 |= ((parity >> ((data >> 4) & 0xf)) & 0x1) << j;
+			n3 |= ((parity >> ((data >> 8) & 0xf)) & 0x1) << j;
+			n4 |= ((parity >> ((data >> 12) & 0xf)) & 0x1) << j;
+			n5 |= ((parity >> ((data >> 16) & 0xf)) & 0x1) << j;
+			n6 |= ((parity >> ((data >> 20) & 0xf)) & 0x1) << j;
+			n7 |= ((parity >> ((data >> 24) & 0xf)) & 0x1) << j;
+			n8 |= ((parity >> ((data >> 28) & 0xf)) & 0x1) << j;
 		}
-		hvd->h[i] = a ^ b ^ c ^ d ^ e ^ f ^ g ^ h;
+		h[i] = n1 ^ n2 ^ n3 ^ n4 ^ n5 ^ n6 ^ n7 ^ n8;
 	}
 }
 
@@ -86,11 +80,11 @@ static void HVD_calc_h_parity(struct HVD *hvd)
  *          MSB                         LSB
  * word 1: |p01|p02|p03|p04|p05|p06|p07|p08|
  */
-static void HVD_calc_v_parity(struct HVD *hvd)
+static void HVD_calc_v_parity(struct HVD *hvd, unsigned *v)
 {
-	hvd->v = 0;
+	*v = 0;
 	for (int i = 0; i < ROWS; i++)
-		hvd->v ^= hvd->data[i];
+		*v ^= hvd->data[i];
 }
 
 /** 
@@ -116,20 +110,20 @@ static void HVD_calc_v_parity(struct HVD *hvd)
  * word 1: |p01|p02|p03|p04|p05|p06|p07|p08|
  * word 2: |p09|p10|p11|p12|p13|p14|p15|---|
  */
-static void HVD_calc_sd_parity(struct HVD *hvd)
+static void HVD_calc_sd_parity(struct HVD *hvd, unsigned *sd)
 {
 	int parity = 0;
 
 	for (int i = 0; i <  BLOCKS; i++) {
-		hvd->sd[i] = 0;
+		sd[i] = 0;
 		for (int j = 0; j < 32; j++) {
 			parity ^= hvd->data[j + 32 * i];
-			hvd->sd[i] |= (parity >> 31) & 0x1;
-			hvd->sd[i] <<= (j == 31) ? 0 : 1;
+			sd[i] |= (parity >> 31) & 0x1;
+			sd[i] <<= (j == 31) ? 0 : 1;
 			parity <<= 1;
 		}
 	}
-	hvd->sd[BLOCKS] = parity;
+	sd[BLOCKS] = parity;
 }
 
 /** 
@@ -155,53 +149,91 @@ static void HVD_calc_sd_parity(struct HVD *hvd)
  * word 1: |p01|p02|p03|p04|p05|p06|p07|p08|
  * word 2: |p09|p10|p11|p12|p13|p14|p15|---|
  */
-static void HVD_calc_bd_parity(struct HVD *hvd)
+static void HVD_calc_bd_parity(struct HVD *hvd, unsigned *bd)
 {
 	unsigned int parity = 0;
 
 	for (int i = 0; i <  BLOCKS; i++) {
-		hvd->bd[i] = 0;
+		bd[i] = 0;
 		for (int j = 0; j < 32; j++) {
 			parity ^= hvd->data[j + 32 * i];
-			hvd->bd[i] |= parity & 0x1;
-			hvd->bd[i] <<= (j == 31) ? 0 : 1;
+			bd[i] |= parity & 0x1;
+			bd[i] <<= (j == 31) ? 0 : 1;
 			parity >>= 1;
 		}
 	}
 
-	hvd->bd[BLOCKS] = 0;
+	bd[BLOCKS] = 0;
 	/* Revert last parity word */
 	for (int i = 0; i < 30; i++) {
-		hvd->bd[BLOCKS] |= parity & 0x1;
+		bd[BLOCKS] |= parity & 0x1;
 		parity >>= 1;
-		hvd->bd[BLOCKS] <<= 1;
+		bd[BLOCKS] <<= 1;
 	}
-	hvd->bd[BLOCKS] <<= 1;
+	bd[BLOCKS] <<= 1;
 }
 
 void HVD_calc_parity(struct HVD *hvd)
 {
-	HVD_calc_h_parity(hvd);
-	HVD_calc_v_parity(hvd);
-	HVD_calc_sd_parity(hvd);
-	HVD_calc_bd_parity(hvd);
+	HVD_calc_h_parity(hvd, hvd->h);
+	HVD_calc_v_parity(hvd, &hvd->v);
+	HVD_calc_sd_parity(hvd, hvd->sd);
+	HVD_calc_bd_parity(hvd, hvd->bd);
 }
-	
-int HVD_repair_data(struct HVD *hvd_t, struct HVD *hvd_r)
+
+int HVD_check_integrity(struct HVD *hvd)
+{
+	unsigned sd[BLOCKS + 1];
+	unsigned bd[BLOCKS + 1];
+	unsigned h[BLOCKS];
+	unsigned v;
+
+	HVD_calc_h_parity(hvd, h);
+	HVD_calc_v_parity(hvd, &v);
+	HVD_calc_sd_parity(hvd, sd);
+	HVD_calc_bd_parity(hvd, bd);
+
+	if (hvd->v != v) return 0;
+	for (int i = 0; i < BLOCKS; i++) {
+		if (hvd->h[i] != h[i])
+			return 0;
+		if (hvd->sd[i] != sd[i])
+			return 0;
+		if (hvd->bd[i] != bd[i])
+			return 0;
+	}
+	if (hvd->sd[BLOCKS] != sd[BLOCKS])
+		return 0;
+	if (hvd->bd[BLOCKS] != bd[BLOCKS])
+		return 0;
+
+	return 1;
+}
+
+int HVD_repair_data(struct HVD *hvd)
 {
 	int flips = 0;
+	unsigned sd[BLOCKS + 1];
+	unsigned bd[BLOCKS + 1];
+	unsigned h[BLOCKS];
+	unsigned v;
+
+	HVD_calc_h_parity(hvd, h);
+	HVD_calc_v_parity(hvd, &v);
+	HVD_calc_sd_parity(hvd, sd);
+	HVD_calc_bd_parity(hvd, bd);
 
 	/* For every erroneous row... */
 	for (int i = 0; i < ROWS; i++) {
 	if (
-		(hvd_t->h[i / 32] >> i % 32 & 0x1) !=
-		(hvd_r->h[i / 32] >> i % 32 & 0x1)
+		(hvd->h[i / 32] >> i % 32 & 0x1) !=
+		(h[i / 32] >> i % 32 & 0x1)
 	) {
 		/* ...every erroneous column... */
 		for (int j = 0; j < 32; j++) {
 		if (
-			((hvd_r->v >> (31 - j)) & 0x1) !=
-			((hvd_t->v >> (31 - j)) & 0x1)
+			((hvd->v >> (31 - j)) & 0x1) !=
+			((v >> (31 - j)) & 0x1)
 		) {
 			int sd_b = (i + j) / 32;
 			int sd_r = (i + j) % 32;
@@ -211,17 +243,17 @@ int HVD_repair_data(struct HVD *hvd_t, struct HVD *hvd_r)
 			 * are erroneous too */
 			if (
 				(
-				((hvd_r->sd[sd_b] >> (31 - sd_r)) & 0x1) !=
-				((hvd_t->sd[sd_b] >> (31 - sd_r)) & 0x1)
+				((hvd->sd[sd_b] >> (31 - sd_r)) & 0x1) !=
+				((sd[sd_b] >> (31 - sd_r)) & 0x1)
 				) &
 				(
-				((hvd_r->bd[bd_b] >> (31 - bd_r)) & 0x1) !=
-				((hvd_t->bd[bd_b] >> (31 - bd_r) & 0x1))
+				((hvd->bd[bd_b] >> (31 - bd_r)) & 0x1) !=
+				((bd[bd_b] >> (31 - bd_r) & 0x1))
 				)
 			) {
 				/* flip erroneous bit to correct */
 				aprintf("col %d row %d mismatch\n", j, i);
-				hvd_r->data[i] ^= 1 << (31 - j);
+				hvd->data[i] ^= 1 << (31 - j);
 				flips++;
 			}
 		}
@@ -231,23 +263,3 @@ int HVD_repair_data(struct HVD *hvd_t, struct HVD *hvd_r)
 
 	return flips;
 }
-
-int HVD_check_parity(struct HVD *hvd_r, struct HVD *hvd_t)
-{
-	if (hvd_r->v != hvd_t->v) return 0;
-	for (int i = 0; i < BLOCKS; i++) {
-		if (hvd_r->h[i] != hvd_t->h[i])
-			return 0;
-		if (hvd_r->sd[i] != hvd_t->sd[i])
-			return 0;
-		if (hvd_r->bd[i] != hvd_t->bd[i])
-			return 0;
-	}
-	if (hvd_r->sd[BLOCKS] != hvd_t->sd[BLOCKS])
-		return 0;
-	if (hvd_t->bd[BLOCKS] != hvd_t->bd[BLOCKS])
-		return 0;
-
-	return 1;
-}
-
