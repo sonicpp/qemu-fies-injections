@@ -1,4 +1,6 @@
 #include <angelio.h>
+#include <angellib.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include "hvd.h"
@@ -38,7 +40,6 @@ int main(void)
 	else
 		aprintf("Data valid\n");
 
-
-	return 0;
+	aexit(0);
 }
 
