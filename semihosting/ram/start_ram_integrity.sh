@@ -53,5 +53,5 @@ done
 echo "</injection>" >> $INJECTION_FILE
 
 make
-$QEMU -semihosting -kernel $BIN_FILE -fi $INJECTION_FILE
+$QEMU -nographic -semihosting -kernel $BIN_FILE -fi $INJECTION_FILE
 
