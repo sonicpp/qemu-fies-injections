@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<injection>
+	<fault>
+		<id>1</id>
+		<component>CPU</component>
+		<target>INSTRUCTION EXECUTION</target>
+		<mode>NEW VALUE</mode>
+		<trigger>ACCESS</trigger>
+		<type>PERMANENT</type>
+		<params> 
+			<address>ebfffff0</address>
+			<instruction>0xDEADBEEF</instruction>
+		</params>
+	</fault>
+</injection>
+
