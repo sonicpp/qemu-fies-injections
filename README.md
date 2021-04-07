@@ -19,6 +19,7 @@ More info about protecting SW againts injections/HW faults can be found in these
 * RAM error detection & correction using HVD implementation
 * Enforcing Forward-Edge Control-Flow Integrity in GCC & LLVM
 * Flipping Bits in Memory Without Accessing Them: An Experimental Study of DRAM Disturbance Errors
-* Exploiting the DRAM rowhammer bug to gain kernel privileges
+* Exploiting the DRAM rowhammer bug to gain kernel privileges ([video](https://www.youtube.com/watch?v=0U7511Fb4to), [source code](https://github.com/google/rowhammer-test))
 * Bitsquatting: Exploiting Bit-flips for Fun, or Profit?
+* Plundervolt: Flipping Bits from Software without Rowhammer ([video](https://www.youtube.com/watch?v=zKIliM-pHFs), [source code](https://github.com/KitMurdock/plundervolt))
 
